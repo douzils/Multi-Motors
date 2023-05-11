@@ -101,7 +101,7 @@ Amax-2306-1950,Amax,Performante 2306,V1,2306,1950,27,06,23,15,,5,12,Ecrou,Non,4 
 Amax-2306-2550,Amax,Performante 2306,V1,2306,2550,27,06,23,15,,5,12,Ecrou,Non,4 Vis,16,4S,14.8,150MM,,755,,,,,51,,,,,,https://amaxshop,com/index,php?route=product/product&product_id=488,https://amaxshop,com/image/cache/catalog/motor/Performante2306_5pcs_aMAXinno-550x550,jpg
 Arma-1103-8000,Armattan,MICRO 1103,V1,1103,8000,3.68,03,11,,,,,Tige,Oui,4 Vis,,3S,11.100000000000001,70MM,30AWG,0,,,,2,5 Inch,,,,N52H ARC,,,https://armattanquads,com/armattan-micro-1103-8000kv-motor-1-piece/,https://cdn11,bigcommerce,com/s-wrwm6/images/stencil/500x659/products/1142/3359/11038000kv_close-up__98896,1575461910,jpg?c=2
 Arma-1204-5000,Armattan,1204,V1,1204,5000,6.22,04,12,,,,,Tige,Oui,4 Vis,,4S,14.8,90MM,28AWG,0,,,,2,5-3 Inch,,,,N52H,,,https://armattanquads,com/armattan-1204-5000kv-motor-1-piece/,https://cdn11,bigcommerce,com/s-wrwm6/images/stencil/1280x1280/products/1159/3443/Armattan_1204-5000kv_close-up__90375,1594221140,jpg?c=2
-Arma-1306-3500,Armattan,1306,V1,1306,3500,,06,13,,,5,,Ecrou,Non,4 Vis,,,0,,,0,,,,,,,,,,,https://armattanquads,com/armattan-1306-3500kv-oem-motor/,https://cdn11,bigcommerce,com/s-wrwm6/images/stencil/1280x1280/products/460/758/DSC_0109__00226,1454401173,jpg?c=2
+Arma-1306-3500,Armattan,1306,V1,1306,3500,,06,13,,,,,Ecrou,Non,4 Vis,,,0,,,0,,,,,,,,,,,https://armattanquads,com/armattan-1306-3500kv-oem-motor/,https://cdn11,bigcommerce,com/s-wrwm6/images/stencil/1280x1280/products/460/758/DSC_0109__00226,1454401173,jpg?c=2
 Arma-1407-3850,Armattan,OOMPH 1407,V1,1407,3850,15.7,07,14,,,5,,Ecrou,Non,4 Vis,,4S,14.8,,,0,,,,3-4 Inch,,,,N52H ARC,,,https://armattanquads,com/armattan-oomph-titan-mini-1407-3650-kv-motor/,https://cdn11,bigcommerce,com/s-wrwm6/images/stencil/500x659/products/843/2393/Mini_TITAN_Oomph_14073650kv_with_spacer_installed_close-up__97394,1518670227,jpg?c=2
 Arma-1407-3650,Armattan,OOMPH TITAN MINI 1407,V1,1407,3650,13,07,14,,,5,5,Tige,Non,3 Vis,16,4S,14.8,150MM,20AWG,0,,,,3-4 Inch,,Multicopter,,N52H ARC,,,4x Armattan Oomph TITAN MiNi 1407/3650 KV Motor - Armattan Productions (armattanquads,com),https://cdn11,bigcommerce,com/s-wrwm6/images/stencil/1280x1280/products/991/2713/Mini_TITAN_Oomph_14073650kv_with_spacer_installed_close-up__39028,1539681444,jpg?c=2
 Arma-1806-2550,Armattan,SE RACE SERIES 1806,V1,1806,2550,23,06,18,,,3,,,,,,,0,,,0,,,,,,,,,,,,
@@ -1071,8 +1071,8 @@ FPVC-2207-1900,FPVCREATE,BOOSTER 2207 V2,V2,2207,1900,31,07,22,,,,,,,,,,0,,,0,,,
 FPVC-2207-2500,FPVCREATE,BOOSTER 2207 V2,V2,2207,2500,31,07,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
 FPVC-1303-11500,FPVCYCLE,LIGHT 1202,5,,1303,11500,4.5,03,13,,,,,,,,,,0,,,0,,,,,,,,,,,,
 FPVC-2203-1450,FPVCYCLE,2207,,2203,1450,55,03,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
-FPVC-2203-2800,FPVCYCLE,Fri Apr 01 2203 00:00:00 GMT+0200 (Central European Summer Time),,2203,2800,23,03,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
-FPVC-2203-3450,FPVCYCLE,Fri Apr 01 2203 00:00:00 GMT+0200 (Central European Summer Time),,2203,3450,23,03,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
+FPVC-2203-2800,FPVCYCLE,Fri Apr 01 2203 00:00:00 GMT+0200 (heure d’été d’Europe centrale),,2203,2800,23,03,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
+FPVC-2203-3450,FPVCYCLE,Fri Apr 01 2203 00:00:00 GMT+0200 (heure d’été d’Europe centrale),,2203,3450,23,03,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
 FPVC-2207-5000,FPVCYCLE,1303,,2207,5000,6,07,22,,,,,,,,,,0,,,0,,,,,,,,,,,,
 FPVC-2506-,FPVCYCLE,HEAVY MOTOR,,2506,,,06,25,,,,,,,,,,0,,,0,,,,,,,,,,,,
 GARI-2506-2850,GARILA,J2506,,2506,2850,38.3,06,25,,,,,,,,,,0,,,0,,,,,,,,,,,,
