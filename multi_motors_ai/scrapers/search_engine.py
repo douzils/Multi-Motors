@@ -7,7 +7,13 @@ from typing import Optional
 try:
     from ddgs import DDGS
 except ImportError:
-    from duckduckgo_search import DDGS
+    try:
+        from duckduckgo_search import DDGS
+    except ImportError:
+        raise ImportError(
+            "Neither 'ddgs' nor 'duckduckgo_search' is installed. "
+            "Run: pip install ddgs"
+        )
 
 from ..config import MOTOR_BRANDS, SEARCH_QUERIES, STATOR_SIZES, MAX_RESULTS_PER_SEARCH
 from ..models import MotorSpec
