@@ -4,21 +4,16 @@ import logging
 import re
 from typing import Optional
 
-from duckduckgo_search import DDGS
+try:
+    from ddgs import DDGS
+except ImportError:
+    from duckduckgo_search import DDGS
 
 from ..config import MOTOR_BRANDS, SEARCH_QUERIES, STATOR_SIZES, MAX_RESULTS_PER_SEARCH
 from ..models import MotorSpec
 from .base import BaseScraper
 
 logger = logging.getLogger(__name__)
-
-# URL patterns that are likely motor product pages
-MOTOR_URL_PATTERNS = [
-    r"motor",
-    r"brushless",
-    r"\d{4}",  # Stator size in URL
-    r"\d+kv",
-]
 
 # URLs to skip
 SKIP_PATTERNS = [
@@ -31,7 +26,14 @@ SKIP_PATTERNS = [
     r"ebay\.",
     r"wikipedia\.org",
     r"\.pdf$",
+    r"thingiverse\.com",
+    r"pinterest\.",
 ]
+
+
+def _get_url(result: dict) -> str:
+    """Extract URL from a search result (handles both old and new ddgs API)."""
+    return result.get("href") or result.get("link") or result.get("url") or ""
 
 
 class SearchEngineScraper(BaseScraper):
@@ -52,12 +54,55 @@ class SearchEngineScraper(BaseScraper):
             if re.search(pattern, url, re.IGNORECASE):
                 return False
 
-        # Check for motor-related content
+        # Accept any result that mentions motors/fpv/brushless in ANY field
+        # Since our search queries are already motor-specific, be permissive
         motor_keywords = [
             "brushless", "motor", "kv", "stator",
             "fpv", "drone", "racing", "quad",
+            "propulsion", "multirotor", "whoop",
         ]
-        return any(kw in combined for kw in motor_keywords)
+        if any(kw in combined for kw in motor_keywords):
+            return True
+
+        # Also accept known FPV shop domains
+        fpv_domains = [
+            "getfpv", "racedayquads", "pyrodrone", "betafpv",
+            "iflight", "tmotor", "emax", "geprc", "flywoo",
+            "brotherhobby", "happymodel", "diatone", "speedybee",
+            "caddxfpv", "newbeedrone", "rotorvillage", "fpvrace",
+            "droneracingparts", "banggood", "aliexpress",
+        ]
+        url_lower = url.lower()
+        if any(domain in url_lower for domain in fpv_domains):
+            return True
+
+        return False
+
+    def _parse_results(self, search_results: list, brand: str = "") -> list[dict]:
+        """Parse search results into a uniform format."""
+        results = []
+        for r in search_results:
+            url = _get_url(r)
+            title = r.get("title", "")
+            snippet = r.get("body", "") or r.get("snippet", "") or r.get("description", "")
+
+            logger.debug(
+                "Search result: url=%s title=%s", url[:80] if url else "N/A", title[:60]
+            )
+
+            if not url or url in self._searched_urls:
+                continue
+
+            if self._is_motor_url(url, title, snippet):
+                results.append({
+                    "url": url,
+                    "title": title,
+                    "snippet": snippet,
+                    "brand": brand,
+                })
+                self._searched_urls.add(url)
+
+        return results
 
     def search_brand(self, brand: str, max_results: int = 10) -> list[dict]:
         """Search for motors from a specific brand."""
@@ -69,22 +114,18 @@ class SearchEngineScraper(BaseScraper):
 
         for query in queries:
             try:
-                with DDGS() as ddgs:
-                    search_results = list(ddgs.text(
-                        query,
-                        max_results=max_results,
-                    ))
-                    for r in search_results:
-                        url = r.get("href", "")
-                        if url and url not in self._searched_urls:
-                            if self._is_motor_url(url, r.get("title", ""), r.get("body", "")):
-                                results.append({
-                                    "url": url,
-                                    "title": r.get("title", ""),
-                                    "snippet": r.get("body", ""),
-                                    "brand": brand,
-                                })
-                                self._searched_urls.add(url)
+                ddgs = DDGS()
+                search_results = list(ddgs.text(
+                    query,
+                    max_results=max_results,
+                ))
+                logger.debug(
+                    "Query '%s' returned %d raw results",
+                    query,
+                    len(search_results),
+                )
+                parsed = self._parse_results(search_results, brand=brand)
+                results.extend(parsed)
             except Exception as e:
                 logger.warning("Search failed for query '%s': %s", query, e)
                 self._delay()
@@ -100,22 +141,15 @@ class SearchEngineScraper(BaseScraper):
         query = f"brushless motor {stator} fpv drone specifications KV"
 
         try:
-            with DDGS() as ddgs:
-                search_results = list(ddgs.text(
-                    query,
-                    max_results=max_results,
-                ))
-                for r in search_results:
-                    url = r.get("href", "")
-                    if url and url not in self._searched_urls:
-                        if self._is_motor_url(url, r.get("title", ""), r.get("body", "")):
-                            results.append({
-                                "url": url,
-                                "title": r.get("title", ""),
-                                "snippet": r.get("body", ""),
-                                "brand": "",
-                            })
-                            self._searched_urls.add(url)
+            ddgs = DDGS()
+            search_results = list(ddgs.text(
+                query,
+                max_results=max_results,
+            ))
+            logger.debug(
+                "Query '%s' returned %d raw results", query, len(search_results),
+            )
+            results = self._parse_results(search_results)
         except Exception as e:
             logger.warning("Search failed for stator '%s': %s", stator, e)
 
@@ -126,30 +160,26 @@ class SearchEngineScraper(BaseScraper):
         """Search for newly released brushless motors."""
         results = []
         queries = [
-            "new brushless motor fpv 2024 2025 specifications",
+            "new brushless motor fpv 2025 2026 specifications",
             "latest fpv racing motor release brushless",
             "new drone motor brushless KV specs",
-            "best fpv motor 2025 brushless stator",
+            "best fpv motor 2026 brushless stator",
         ]
 
         for query in queries:
             try:
-                with DDGS() as ddgs:
-                    search_results = list(ddgs.text(
-                        query,
-                        max_results=max_results,
-                    ))
-                    for r in search_results:
-                        url = r.get("href", "")
-                        if url and url not in self._searched_urls:
-                            if self._is_motor_url(url, r.get("title", ""), r.get("body", "")):
-                                results.append({
-                                    "url": url,
-                                    "title": r.get("title", ""),
-                                    "snippet": r.get("body", ""),
-                                    "brand": "",
-                                })
-                                self._searched_urls.add(url)
+                ddgs = DDGS()
+                search_results = list(ddgs.text(
+                    query,
+                    max_results=max_results,
+                ))
+                logger.debug(
+                    "Query '%s' returned %d raw results",
+                    query,
+                    len(search_results),
+                )
+                parsed = self._parse_results(search_results)
+                results.extend(parsed)
             except Exception as e:
                 logger.warning("Search failed for query '%s': %s", query, e)
 
