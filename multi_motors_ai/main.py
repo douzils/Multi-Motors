@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Multi-Motors AI - Continuous brushless motor catalog builder.
 
-This application continuously searches the web for brushless motors,
-extracts their specifications, and adds them to a Google Sheet catalog.
+Finds brushless motors online, extracts specs, and adds them
+one by one (drip feed) to the correct brand tab in Google Sheets.
 """
 
 import logging
@@ -43,7 +43,7 @@ _running = True
 
 def signal_handler(sig, frame):
     global _running
-    logger.info("Shutdown signal received, finishing current cycle...")
+    logger.info("Shutdown signal received, finishing current motor...")
     _running = False
 
 
@@ -65,7 +65,7 @@ def deduplicate_motors(motors: list[MotorSpec]) -> list[MotorSpec]:
 
 
 def run_scan_cycle(sheets: SheetsManager) -> int:
-    """Run one complete scan cycle across all sources.
+    """Run one complete scan cycle: discover motors then drip-feed them.
 
     Returns the number of new motors added.
     """
@@ -74,18 +74,18 @@ def run_scan_cycle(sheets: SheetsManager) -> int:
     logger.info("=" * 60)
 
     all_motors: list[MotorSpec] = []
+    existing_refs = sheets.get_all_refs()
 
     # --- Phase 1: Search Engine Discovery ---
     logger.info("--- Phase 1: Search Engine Discovery ---")
     try:
         search_scraper = SearchEngineScraper()
 
-        # Rotate through brands (pick a random subset each cycle)
+        # Rotate through brands (random subset each cycle)
         brand_sample = random.sample(
             MOTOR_BRANDS,
             min(10, len(MOTOR_BRANDS)),
         )
-        # Rotate through stator sizes
         stator_sample = random.sample(
             STATOR_SIZES,
             min(8, len(STATOR_SIZES)),
@@ -97,9 +97,6 @@ def run_scan_cycle(sheets: SheetsManager) -> int:
             include_new=True,
         )
 
-        # Filter URLs that might match existing motors
-        existing_refs = sheets.get_all_refs()
-
         for result in discovered:
             if not _running:
                 break
@@ -108,7 +105,6 @@ def run_scan_cycle(sheets: SheetsManager) -> int:
                     url=result["url"],
                     brand=result.get("brand", ""),
                 )
-                # Only keep motors that don't already exist
                 for motor in motors:
                     if not motor.ref:
                         motor.generate_ref()
@@ -150,10 +146,10 @@ def run_scan_cycle(sheets: SheetsManager) -> int:
 
     # --- Deduplicate and filter ---
     all_motors = deduplicate_motors(all_motors)
-    valid_motors = [m for m in all_motors if m.is_valid()]
+    valid_motors = [m for m in all_motors if m.is_valid() and m.marque]
 
     logger.info(
-        "After deduplication: %d valid motors out of %d total",
+        "After deduplication: %d valid motors (with brand) out of %d total",
         len(valid_motors),
         len(all_motors),
     )
@@ -161,22 +157,28 @@ def run_scan_cycle(sheets: SheetsManager) -> int:
     # Sort by completeness (most complete first)
     valid_motors.sort(key=lambda m: m.completeness_score(), reverse=True)
 
-    # --- Push to Google Sheets ---
+    # --- Drip feed to Google Sheets ---
     if valid_motors:
-        added = sheets.add_motors(valid_motors)
-        logger.info("Added %d new motors to the catalog", added)
+        logger.info("--- Drip Feed: inserting motors one by one ---")
+        added = 0
+        for motor in valid_motors:
+            if not _running:
+                logger.info("Shutdown requested, stopping drip feed")
+                break
+            if sheets.drip_add_motor(motor):
+                added += 1
+        logger.info("Drip feed done: %d new motors added", added)
     else:
         added = 0
         logger.info("No new motors to add this cycle")
 
-    # Refresh the refs cache
-    sheets.refresh_refs()
-
-    total_in_sheet = sheets.get_row_count()
-    logger.info(
-        "Scan cycle complete. Total motors in catalog: %d",
-        total_in_sheet,
-    )
+    # Log summary
+    total = sheets.get_total_count()
+    brand_counts = sheets.get_brand_counts()
+    logger.info("Scan cycle complete. Total motors in catalog: %d", total)
+    logger.info("Motors per brand:")
+    for brand, count in sorted(brand_counts.items()):
+        logger.info("  %s: %d", brand, count)
     logger.info("=" * 60)
 
     return added
@@ -186,6 +188,7 @@ def main():
     """Main entry point - runs the continuous scraping loop."""
     logger.info("=" * 60)
     logger.info("  Multi-Motors AI - Brushless Motor Catalog Builder")
+    logger.info("  Mode: drip feed (one motor at a time per brand tab)")
     logger.info("=" * 60)
 
     # Connect to Google Sheets
@@ -200,8 +203,8 @@ def main():
         )
         sys.exit(1)
 
-    total_in_sheet = sheets.get_row_count()
-    logger.info("Current catalog size: %d motors", total_in_sheet)
+    total = sheets.get_total_count()
+    logger.info("Current catalog: %d motors across %d brand tabs", total, sheets.brand_count)
     logger.info("Authentication mode: %s", sheets.mode)
 
     if not sheets.is_writable:
