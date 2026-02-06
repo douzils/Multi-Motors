@@ -12,6 +12,7 @@ SPREADSHEET_ID = os.getenv(
 )
 SHEET_GID = int(os.getenv("SHEET_GID", "1456126498"))
 GOOGLE_CREDENTIALS_FILE = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
 # Scraping
 REQUEST_DELAY_MIN = float(os.getenv("REQUEST_DELAY_MIN", "2"))

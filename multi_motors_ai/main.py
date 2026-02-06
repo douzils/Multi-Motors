@@ -202,6 +202,14 @@ def main():
 
     total_in_sheet = sheets.get_row_count()
     logger.info("Current catalog size: %d motors", total_in_sheet)
+    logger.info("Authentication mode: %s", sheets.mode)
+
+    if not sheets.is_writable:
+        logger.warning(
+            "Running in READ-ONLY mode (API Key). "
+            "Motors will be discovered but NOT added to the sheet. "
+            "Set up a Service Account for write access (see README)."
+        )
 
     # Run first scan immediately
     logger.info("Running initial scan...")
