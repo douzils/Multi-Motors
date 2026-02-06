@@ -51,62 +51,42 @@ class SearchEngineScraper(BaseScraper):
         super().__init__()
         self._searched_urls: set[str] = set()
 
-    def _is_motor_url(self, url: str, title: str = "", snippet: str = "") -> bool:
-        """Check if a URL is likely a motor product page."""
-        combined = f"{url} {title} {snippet}".lower()
-
-        # Skip unwanted sites
+    def _should_skip_url(self, url: str) -> bool:
+        """Check if a URL should be excluded."""
         for pattern in SKIP_PATTERNS:
             if re.search(pattern, url, re.IGNORECASE):
-                return False
-
-        # Accept any result that mentions motors/fpv/brushless in ANY field
-        # Since our search queries are already motor-specific, be permissive
-        motor_keywords = [
-            "brushless", "motor", "kv", "stator",
-            "fpv", "drone", "racing", "quad",
-            "propulsion", "multirotor", "whoop",
-        ]
-        if any(kw in combined for kw in motor_keywords):
-            return True
-
-        # Also accept known FPV shop domains
-        fpv_domains = [
-            "getfpv", "racedayquads", "pyrodrone", "betafpv",
-            "iflight", "tmotor", "emax", "geprc", "flywoo",
-            "brotherhobby", "happymodel", "diatone", "speedybee",
-            "caddxfpv", "newbeedrone", "rotorvillage", "fpvrace",
-            "droneracingparts", "banggood", "aliexpress",
-        ]
-        url_lower = url.lower()
-        if any(domain in url_lower for domain in fpv_domains):
-            return True
-
+                return True
         return False
 
     def _parse_results(self, search_results: list, brand: str = "") -> list[dict]:
-        """Parse search results into a uniform format."""
+        """Parse search results into a uniform format.
+
+        Since our search queries are already motor-specific, we accept ALL
+        results except those matching SKIP_PATTERNS (social media, etc.).
+        """
         results = []
         for r in search_results:
             url = _get_url(r)
             title = r.get("title", "")
             snippet = r.get("body", "") or r.get("snippet", "") or r.get("description", "")
 
-            logger.debug(
-                "Search result: url=%s title=%s", url[:80] if url else "N/A", title[:60]
-            )
-
             if not url or url in self._searched_urls:
                 continue
 
-            if self._is_motor_url(url, title, snippet):
-                results.append({
-                    "url": url,
-                    "title": title,
-                    "snippet": snippet,
-                    "brand": brand,
-                })
-                self._searched_urls.add(url)
+            if self._should_skip_url(url):
+                logger.debug("Skipped (blocked domain): %s", url[:80])
+                continue
+
+            logger.info(
+                "Discovered: %s | %s", title[:60], url[:80]
+            )
+            results.append({
+                "url": url,
+                "title": title,
+                "snippet": snippet,
+                "brand": brand,
+            })
+            self._searched_urls.add(url)
 
         return results
 
